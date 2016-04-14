@@ -9,10 +9,13 @@ import android.view.View;
 import android.widget.Toast;
 
 import fourtegroupe.testapp.R;
+import fourtegroupe.testapp.TestAppApplication;
 import fourtegroupe.testapp.ui.views.CheckableImageView;
-import fourtegroupe.testapp.util.Utils;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final String IMAGE_URL_1 = "http://heartofgreen.typepad.com/.a/6a00d83451cedf69e201a73dcaba0a970d-pi";
+    public static final String IMAGE_URL_2 = "http://images5.fanpop.com/image/photos/27900000/Ocean-Animals-animals-27960311-1920-1200.jpg";
 
     public static final String NUM_IMAGE = "NUM_IMAGE";
 
@@ -40,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
         selectView1 = findViewById(R.id.select1);
         selectView2 = findViewById(R.id.select2);
 
-        imageView1.setImageBitmap(Utils.getDownScaleBitmap(this, R.drawable.image1));
-        imageView2.setImageBitmap(Utils.getDownScaleBitmap(this, R.drawable.image2));
+        TestAppApplication.getImageLoader().displayImage(MainActivity.IMAGE_URL_1, imageView1);
+        TestAppApplication.getImageLoader().displayImage(MainActivity.IMAGE_URL_2, imageView2);
 
         imageView1.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -7,7 +7,7 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 
 import fourtegroupe.testapp.R;
-import fourtegroupe.testapp.util.Utils;
+import fourtegroupe.testapp.TestAppApplication;
 
 public class PhotoActivity extends AppCompatActivity {
 
@@ -24,12 +24,13 @@ public class PhotoActivity extends AppCompatActivity {
 
         int num = getIntent().getIntExtra(MainActivity.NUM_IMAGE, 1);
         toolbar.setTitle("Number " + num);
+
         switch (num) {
             case 1:
-                imageView.setImageBitmap(Utils.getDownScaleBitmap(this, R.drawable.image1));
+                TestAppApplication.getImageLoader().displayImage(MainActivity.IMAGE_URL_1, imageView);
                 break;
             case 2:
-                imageView.setImageBitmap(Utils.getDownScaleBitmap(this, R.drawable.image2));
+                TestAppApplication.getImageLoader().displayImage(MainActivity.IMAGE_URL_2, imageView);
                 break;
         }
     }
