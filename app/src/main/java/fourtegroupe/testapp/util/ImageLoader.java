@@ -23,40 +23,41 @@ import java.util.concurrent.Executors;
 
 public class ImageLoader {
 
-    MemoryCache memoryCache = new MemoryCache();
+    MemoryCache memoryCache;
     FileCache fileCache;
     private Map<ImageView, String> imageViews = Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
     ExecutorService executorService;
 
     public ImageLoader(Context context) {
         fileCache = new FileCache(context);
+        memoryCache = new MemoryCache();
         executorService = Executors.newFixedThreadPool(5);
     }
 
     public void displayImage(String url, ImageView imageView) {
         imageViews.put(imageView, url);
         Bitmap bitmap = memoryCache.get(url);
-        if (bitmap != null)
+        if (bitmap != null) {
             imageView.setImageBitmap(bitmap);
-        else {
+        } else {
             queuePhoto(url, imageView);
         }
     }
 
     private void queuePhoto(String url, ImageView imageView) {
-        PhotoToLoad p = new PhotoToLoad(url, imageView);
-        executorService.submit(new PhotosLoader(p));
+        Photo photo = new Photo(url, imageView);
+        executorService.submit(new PhotosLoader(photo));
     }
 
     private Bitmap getBitmap(String url) {
         File f = fileCache.getFile(url);
 
-        Bitmap b = decodeFile(f);
-        if (b != null)
-            return b;
+        Bitmap bitmap = decodeFile(f);
+        if (bitmap != null) {
+            return bitmap;
+        }
 
         try {
-            Bitmap bitmap;
             URL imageUrl = new URL(url);
             HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
             conn.setConnectTimeout(30000);
@@ -64,7 +65,7 @@ public class ImageLoader {
             conn.setInstanceFollowRedirects(true);
             InputStream is = conn.getInputStream();
             OutputStream os = new FileOutputStream(f);
-            Utils.CopyStream(is, os);
+            Utils.copyStream(is, os);
             os.close();
             bitmap = decodeFile(f);
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -87,56 +88,60 @@ public class ImageLoader {
         return null;
     }
 
-    private class PhotoToLoad {
+    private class Photo {
         public String url;
         public ImageView imageView;
 
-        public PhotoToLoad(String u, ImageView i) {
+        public Photo(String u, ImageView i) {
             url = u;
             imageView = i;
         }
     }
 
     class PhotosLoader implements Runnable {
-        PhotoToLoad photoToLoad;
+        Photo photo;
 
-        PhotosLoader(PhotoToLoad photoToLoad) {
-            this.photoToLoad = photoToLoad;
+        PhotosLoader(Photo photo) {
+            this.photo = photo;
         }
 
         @Override
         public void run() {
-            if (imageViewReused(photoToLoad))
+            if (imageViewReused(photo)) {
                 return;
-            Bitmap bmp = getBitmap(photoToLoad.url);
-            memoryCache.put(photoToLoad.url, bmp);
-            if (imageViewReused(photoToLoad))
+            }
+            Bitmap bitmap = getBitmap(photo.url);
+            memoryCache.put(photo.url, bitmap);
+            if (imageViewReused(photo)) {
                 return;
-            BitmapDisplayer bd = new BitmapDisplayer(bmp, photoToLoad);
-            Activity a = (Activity) photoToLoad.imageView.getContext();
-            a.runOnUiThread(bd);
+            }
+            BitmapDisplayer bitmapDisplayer = new BitmapDisplayer(bitmap, photo);
+            Activity a = (Activity) photo.imageView.getContext();
+            a.runOnUiThread(bitmapDisplayer);
         }
     }
 
-    boolean imageViewReused(PhotoToLoad photoToLoad) {
-        String tag = imageViews.get(photoToLoad.imageView);
-        return tag == null || !tag.equals(photoToLoad.url);
+    boolean imageViewReused(Photo photo) {
+        String tag = imageViews.get(photo.imageView);
+        return tag == null || !tag.equals(photo.url);
     }
 
     class BitmapDisplayer implements Runnable {
         Bitmap bitmap;
-        PhotoToLoad photoToLoad;
+        Photo photo;
 
-        public BitmapDisplayer(Bitmap b, PhotoToLoad p) {
-            bitmap = b;
-            photoToLoad = p;
+        public BitmapDisplayer(Bitmap bitmap, Photo photo) {
+            this.bitmap = bitmap;
+            this.photo = photo;
         }
 
         public void run() {
-            if (imageViewReused(photoToLoad))
+            if (imageViewReused(photo)) {
                 return;
-            if (bitmap != null)
-                photoToLoad.imageView.setImageBitmap(bitmap);
+            }
+            if (bitmap != null) {
+                photo.imageView.setImageBitmap(bitmap);
+            }
         }
     }
 
